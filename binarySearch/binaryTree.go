@@ -6,6 +6,8 @@ import (
 	"log"
 )
 
+var count int
+
 type Tree struct {
 	Root *Node
 }
@@ -31,10 +33,8 @@ func (t *Tree) Delete(s int) error {
 	}
 
 	fakeParent := &Node{Right: t.Root}
-	err := t.Root.Delete(s, fakeParent)
-	if err != nil {
-		return err
-	}
+	t.Root.Delete(s, fakeParent)
+
 	if fakeParent.Right == nil {
 		t.Root = nil
 	}
@@ -45,55 +45,50 @@ func (n *Node) findMax(parent *Node) (*Node, *Node) {
 	if n == nil {
 		return nil, parent
 	}
+
 	if n.Right == nil {
 		return n, parent
 	}
+
 	return n.Right.findMax(n)
 }
 
-func (n *Node) replaceNode(parent, replacement *Node) error {
-	if n == nil {
-		return errors.New("replaceNode() not allowed on a nil node")
-	}
-
+func (n *Node) ReplaceNode(parent, replacement *Node) {
 	if n == parent.Left {
 		parent.Left = replacement
-		return nil
+		return
 	}
+
 	parent.Right = replacement
-	return nil
 }
 
-func (n *Node) Delete(s int, parent *Node) error {
-	if n == nil {
-		return errors.New("Value to be deleted does not exist in the tree")
-	}
-
+func (n *Node) Delete(val int, parent *Node) {
 	switch {
-	case s < n.Key:
-		return n.Left.Delete(s, n)
-	case s > n.Key:
-		return n.Right.Delete(s, n)
+	case val < n.Key:
+		n.Left.Delete(val, n)
+	case val > n.Key:
+		n.Right.Delete(val, n)
 	default:
 		if n.Left == nil && n.Right == nil {
-			n.replaceNode(parent, nil)
-			return nil
+			n.ReplaceNode(parent, nil)
+			return
 		}
 
 		if n.Left == nil {
-			n.replaceNode(parent, n.Right)
-			return nil
+			n.ReplaceNode(parent, n.Right)
+			return
 		}
+
 		if n.Right == nil {
-			n.replaceNode(parent, n.Left)
-			return nil
+			n.ReplaceNode(parent, n.Left)
+			return
 		}
 
 		replacement, replParent := n.Left.findMax(n)
 
 		n.Key = replacement.Key
 
-		return replacement.Delete(replacement.Key, replParent)
+		replacement.Delete(replacement.Key, replParent)
 	}
 }
 
@@ -101,12 +96,14 @@ func (n *Node) Insert(val int) {
 	if n.Key < val {
 		if n.Right == nil {
 			n.Right = &Node{Key: val}
+			return
 		} else {
 			n.Right.Insert(val)
 		}
 	} else if n.Key > val {
 		if n.Left == nil {
 			n.Left = &Node{Key: val}
+			return
 		} else {
 			n.Left.Insert(val)
 		}
@@ -130,6 +127,28 @@ func PreOrder(n *Node) {
 		fmt.Printf("%d ", n.Key)
 		PreOrder(n.Left)
 		PreOrder(n.Right)
+	}
+}
+
+func (n *Node) Find(val int) {
+	count++
+	if n.Key < val {
+		if n.Right == nil {
+			fmt.Printf("not found, finding in %d step", count)
+			return
+		} else {
+			n.Right.Find(val)
+		}
+	} else if n.Key > val {
+		if n.Left == nil {
+			fmt.Printf("not found, finding in %d step", count)
+			return
+		} else {
+			n.Left.Find(val)
+		}
+	} else {
+		fmt.Printf("found value in %d step", count)
+		return
 	}
 }
 
